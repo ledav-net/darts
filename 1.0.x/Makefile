@@ -1,16 +1,20 @@
 
-OBJS=		darts.o
+OBJS:=		darts.o
+BUILD:=		darts
 
 build:		darts
 
 debug:		darts.c
-		gcc darts.c -o darts -lncurses -D _DEBUG
+		gcc -ggdb $< -o $(BUILD) -lncurses -D _DEBUG
 
 darts:		$(OBJS)
-		gcc $(OBJS) -o darts -lncurses -lallproc
+		gcc $(OBJS) -o $(BUILD) -lncurses -lallproc
 
 clean:
 		rm -f *~ $(OBJS)
 
+distclean:	clean
+		rm -f $(BUILD)
+
 $(OBJS):
-		gcc -O3 -c $*.c
+		gcc -O -c $*.c

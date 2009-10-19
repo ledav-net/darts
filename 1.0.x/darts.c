@@ -2,6 +2,7 @@
 #include <ncurses.h>
 #include <malloc.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define	P_NAME		"Darts"
 #define P_VERSION	"1.0.0"
@@ -57,7 +58,7 @@ struct _game	game;
 
 #ifdef	_DEBUG
 FILE	*debugfile;
-#define	printdebug(a, b...)	fprintf(debugfile, a"\n", b)
+#define	printdebug(a, b...)	fprintf(debugfile, a"\n", b), fflush(debugfile)
 #define	fdebug(a)		fputs(a"\n", debugfile)
 #else
 #define	printdebug(a, b...)
