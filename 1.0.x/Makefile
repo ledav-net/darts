@@ -2,10 +2,14 @@
 OBJS:=		darts.o
 BUILD:=		darts
 
-build:		darts
+build:		$(BUILD)
+
+install:	$(BUILD)
+		@rm -f ~/bin/$(BUILD)
+		@cp -v $(BUILD) ~/bin/$(BUILD)
 
 debug:		darts.c
-		gcc -ggdb $< -o $(BUILD) -lncurses -D _DEBUG
+		gcc -ggdb $< -o $(BUILD) -lallproc -lncurses -D_DEBUG
 
 darts:		$(OBJS)
 		gcc $(OBJS) -o $(BUILD) -lncurses -lallproc
