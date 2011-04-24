@@ -8,17 +8,17 @@ install:	$(BUILD)
 		@rm -f ~/bin/$(BUILD)
 		@cp -v $(BUILD) ~/bin/$(BUILD)
 
-debug:		darts.c
+debug:		$(BUILD).c
 		gcc -ggdb $< -o $(BUILD) -lallproc -lncurses -D_DEBUG
 
-darts:		$(OBJS)
+$(BUILD):	$(OBJS)
 		gcc $(OBJS) -o $(BUILD) -lncurses -lallproc
 
 clean:
 		rm -f *~ $(OBJS)
 
 distclean:	clean
-		rm -f $(BUILD)
+		rm -f $(BUILD) debug.log
 
-$(OBJS):
+.c.o:
 		gcc -O -c $*.c

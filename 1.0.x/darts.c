@@ -41,14 +41,13 @@ struct	_game		{	WINDOW		*main;			/* Main window						*/
 
 void	gameboard_draw(struct _player *);				/* Draw the player's game board				*/
 void	gameboard_show(struct _player *);
-void	gameboard_focus(struct _player *);				/* Focus on specified player's game board		*/
+void	gameboard_focus(struct _player *, struct _player *);		/* Focus on specified player's game board		*/
 void	gameboard_readinput(struct _player *, char *);			/* Read player's score					*/
 void	gameboard_update(struct _player *, int);			/* Update content of specifid player with -n points	*/
 void	gameboard_reset(struct _player *);
 
 void	main_clear(struct _game *);					/* Clear the main screen				*/
-#define	main_show(a)	wrefresh((a)->main)				/* Show modifications on screen				*/
-void	main_draw(struct _game *);					/* draw the main screen					*/
+#define main_show(a)    wrefresh((a)->main)
 void	main_get_infos(struct _game *);					/* get game informations				*/
 
 void	popup(char *);							/* Popup a centralized box with message and wait for a  */
@@ -64,17 +63,19 @@ struct _game	game;
 FILE	*debugfile;
 #define	printdebug(a, b...)	fprintf(debugfile, a"\n", b), fflush(debugfile)
 #define	fdebug(a)		fputs(a"\n", debugfile)
+#define assert(a)		if ( a ) { printf("Assert Error line %d !\n", __LINE__); exit(1); }
 #else
 #define	printdebug(a, b...)
 #define fdebug(a)
+#define assert(a)
 #endif
 
 void	wdrawbox(WINDOW *win, char vch, char hch, int ny, int nx, int y, int x)
 {
-	wmove(win, y, x);		waddch(win, 'A'); whline(win, hch, nx-2);
-	wmove(win, y, x+nx-1);		waddch(win, 'B');
-	wmove(win, y+ny-1, x);		waddch(win, 'C'); whline(win, hch, nx-2);
-	wmove(win, y+ny-1, x+nx-1);	waddch(win, 'D');
+	wmove(win, y, x);		waddch(win, '+'); whline(win, hch, nx-2);
+	wmove(win, y, x+nx-1);		waddch(win, '+');
+	wmove(win, y+ny-1, x);		waddch(win, '+'); whline(win, hch, nx-2);
+	wmove(win, y+ny-1, x+nx-1);	waddch(win, '+');
 
 	wmove(win, y+1, x);		wvline(win, vch, ny-2);
 	wmove(win, y+1, x+nx-1);	wvline(win, vch, ny-2);
@@ -96,9 +97,8 @@ void	popupask(char *msg, char *buf, int maxlen)
 	pop = newwin(nlines, ncols, y, x);
 	wborder(pop,'*','*','=','=',0,0,0,0);
 
-	wmove(pop, 2, 3); waddstr(pop, msg);
-	wmove(pop, 2, 3 + n + 1);
-	wgetnstr(pop, buf, 50);
+	mvwaddstr(pop, 2, 3, msg);
+	mvwgetnstr(pop, 2, 3 + n + 1, buf, maxlen);
 
 	delwin(pop);
 }
@@ -120,27 +120,32 @@ void	popup(char *msg)
 	wborder(pop,'*','*','=','=',0,0,0,0);
 
 	wmove(pop, 2, 2); waddstr(pop, msg);
-
 	noecho(); wgetch(pop); echo();
 
 	delwin(pop);	
 }
 
-void    main_draw(struct _game *game)
-{
-	wborder(game->main,'|','|','-','-',0,0,0,0);
-	wmove(game->main,10,40); waddstr(game->main,"Nombre de joueur  :");
-	wmove(game->main,11,40); waddstr(game->main,"Points de depart  :");
-	wmove(game->main,12,40); waddstr(game->main,"Type de partie    :");
-}
-
 void    main_get_infos(struct _game *game)
 {
-	do wmove(game->main,10,60); while ( wscanw(game->main,"%d", &game->playersnbr)  == 0 || ! between(game->playersnbr,  0, 4));
-	do wmove(game->main,11,60); while ( wscanw(game->main,"%d", &game->startpoints) == 0 || ! between(game->startpoints, 0, 901));
-	do wmove(game->main,12,60); while ( wscanw(game->main,"%d", &game->gametype )   == 0 );
+	char	b[4];
 
-	game->gamenbr = 1;
+	do {
+		popupask("Nombre de joueurs (1-4) ?", b, 1);
+		game->playersnbr = atoi(b);
+	}
+	while ( ! between(game->playersnbr,  1, 4)   );
+	
+	do {
+		popupask("Point de depart (2-901) ?", b, 3);
+		game->startpoints = atoi(b);
+	}
+	while ( ! between(game->startpoints, 2, 901) );
+	
+	do {
+		popupask("Type de partie (1=normal, 2=competition) ?", b, 1);
+		game->gametype = atoi(b);
+	}
+	while ( ! between(game->gametype, 1, 2) );
 }
 
 void	main_clear(struct _game *g)
@@ -150,16 +155,15 @@ void	main_clear(struct _game *g)
 	waddstr(g->main, P_NAME" v"P_VERSION", (C) 2002 by David De Grave. All rights reserved.");
 }
 
-void    gameboard_focus(struct _player *player)
+void    gameboard_focus(struct _player *p, struct _player *n)
 {
-	wmove(player->input,1,5);
+	wmove(n->input, 1, 5);
 }
 
 void	gameboard_show(struct _player *p)
 {
 	touchwin(p->main);
 	wrefresh(p->main);
-
 	fdebug("gameboard_show() called");
 }
 
@@ -172,10 +176,9 @@ void	put_matrix(WINDOW *win, const char mtx[MTX_LINES][MTX_COLS+1], int y, int x
 void	gameboard_drawstatus(struct _player *p)
 {
 	wclear(p->stat);
-	wmove(p->stat,  0, 1); wprintw(p->stat,	"Name: %-30s"
-						, p->name);
-	wmove(p->stat,  1, 1); wprintw(p->stat,	" Won: %-2d  Lost: %-2d  Best point: %-3d  Best finish: %-3d"
-						, p->won, p->lost, p->bestPoint, p->bestFinish);
+	mvwprintw(p->stat, 0, 1, "Name: %-30s" , p->name);
+	mvwprintw(p->stat, 1, 1, " Won: %-2d  Lost: %-2d  Best point: %-3d  Best finish: %-3d"
+				, p->won, p->lost, p->bestPoint, p->bestFinish);
 }
 
 void	gameboard_drawtotal(struct _player *p)
@@ -183,11 +186,13 @@ void	gameboard_drawtotal(struct _player *p)
 	int	d, r, i=2;
 
 	wclear(p->total);
+	wcolor_set(p->total, 1, 0);
+	wattron(p->total, A_BOLD);
 
-	d = p->score;
-
+	d = p->score;	        
 	do {
 		r = d % 10;
+
 		put_matrix(p->total, matrix[r], 1, 8+(i*MTX_COLS));
 		d = d / 10;
 	}
@@ -241,7 +246,7 @@ void	gameboard_draw(struct _player *p)
 	wdrawbox(p->main, '|', '-', 17, 12,          4,  0);	/* List		*/
 	wdrawbox(p->main, '|', '-', 3,  MAX_COLS/2, 21,  0);	/* Input	*/
 
-	wmove(p->input, 0, 1); waddstr(p->input, "Score ?");
+	mvwaddstr(p->input, 0, 1, "Score ?");
 
 	gameboard_drawtotal(p);
 	gameboard_drawstatus(p);
@@ -289,7 +294,22 @@ struct _player *       init_players(struct _game *game)
 		mvwgetnstr(playersptr[p].stat, 0, 7, playersptr[p].name, sizeof(playersptr[0].name));
 	}
 
-	return	playersptr;
+	return playersptr;
+}
+
+void	reset_players(struct _game *g, struct _player *p)
+{
+	int	i;
+
+	for ( i=0 ; i < g->playersnbr ; i++ ) {
+		p[i].lastpnts = 0;
+		p[i].score    = g->startpoints,
+		p[i].turn     = 0;
+		p[i].lost     = g->gamenbr - p[i].won;
+
+		wclear(p[i].list);
+		gameboard_draw(&p[i]);
+	}
 }
 
 int	main(void)
@@ -307,9 +327,16 @@ int	main(void)
 
 	game.main = initscr();
 
-	main_draw(&game);  main_show(&game);
-	main_get_infos(&game);	/* Get basical informations about the game */
-	main_clear(&game); main_show(&game);
+	if ( has_colors() ) {
+		printdebug("Colors enabled !","");
+		start_color();
+		init_pair(1, COLOR_BLUE,  COLOR_BLACK);	/* Total		*/
+		init_pair(2, COLOR_WHITE, COLOR_BLACK); /* Player's name	*/
+	}
+
+	main_get_infos(&game);
+	main_clear(&game);
+	main_show(&game);
 
 	players = init_players(&game); /* Initialize & show all the game boards */
 
@@ -317,7 +344,7 @@ int	main(void)
 		if ( actual_player == game.playersnbr ) actual_player = 0;
 		p = &players[actual_player];
 
-		gameboard_focus(p);
+		gameboard_focus(&players[last_player], p);
 		gameboard_readinput(p, buf);
 
 		printdebug("Readed: %s", buf);
@@ -330,13 +357,13 @@ int	main(void)
 				case 'B': gameboard_rollback(&players[last_player]);	/* (B) Rollback the previous action	*/
 					  gameboard_show(&players[last_player]);
 					  actual_player = last_player;
+				case 'H': break;
 			}
 		}else{
 			fdebug("This is a Number ...");
 			i = atoi(buf);
 
 			if ( i <= p->score && i <= 180 ) {
-				
 				gameboard_update(p, i);
 				gameboard_show(p);
 			}else{
@@ -352,19 +379,13 @@ int	main(void)
 				if ( toupper(buf[0]) == 'N' ) goto endgame;
 
 				if ( p->bestFinish < i ) p->bestFinish = i;
+
 				p->won++;
-
-				for ( i=0 ; i < game.playersnbr ; i++ ) {
-					players[i].lastpnts = 0;
-					players[i].score    = game.startpoints,
-					players[i].turn     = 0;
-					players[i].lost     = game.gamenbr-players[i].won;
-
-					wclear(players[i].list);
-					gameboard_draw(&players[i]);
-				}
-				last_player = actual_player = 0;
 				game.gamenbr++;
+				last_player = actual_player = 0;
+
+				reset_players(&game, players);
+
 				touchwin(game.main);
 				main_show(&game);
 			}
