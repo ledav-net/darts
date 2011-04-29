@@ -1,12 +1,13 @@
 
 OBJS:=		darts.o
 BUILD:=		darts
+INSTALLDIR:=	/usr/local/bin
 
 build:		$(BUILD)
 
 install:	$(BUILD)
-		@rm -f ~/bin/$(BUILD)
-		@cp -v $(BUILD) ~/bin/$(BUILD)
+		@rm -f $(INSTALLDIR)/$(BUILD)
+		@cp -v $(BUILD) $(INSTALLDIR)/$(BUILD)
 
 debug:		$(BUILD).c
 		gcc -ggdb $< -o $(BUILD) -lallproc -lncurses -D_DEBUG
