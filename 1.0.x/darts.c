@@ -386,6 +386,7 @@ int	main(void)
 				case 'B': gameboard_rollback(&players[last_player]);	/* (B) Rollback the previous action	*/
 					  gameboard_show(&players[last_player]);
 					  actual_player = last_player;
+					  break;
 				case 'H': show_help();
 					  main_show(&game);
 					  break;
