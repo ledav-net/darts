@@ -1,4 +1,6 @@
 
+
+
 OBJS:=		darts.o
 BUILD:=		darts
 INSTALLDIR:=	/usr/local/bin
