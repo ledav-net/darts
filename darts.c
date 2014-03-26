@@ -211,7 +211,7 @@ void	put_matrix(WINDOW *win, const char mtx[MTX_LINES][MTX_COLS+1], int y, int x
 void	gameboard_drawstatus(struct _player *p)
 {
 	wclear(p->stat);
-	mvwprintw(p->stat, 0, 1, "Name: %-30s" , p->name);
+	mvwprintw(p->stat, 0, 1, "Name: %-30s", p->name);
 	mvwprintw(p->stat, 1, 1, " Won: %-2d  Lost: %-2d  Best point: %-3d  Best finish: %-3d"
 				, p->won, p->lost, p->bestPoint, p->bestFinish);
 }
@@ -222,14 +222,19 @@ void	gameboard_drawtotal(struct _player *p)
 
 	wclear(p->total);
 
+	if ( p->score <= 170 )	wcolor_set(p->total, 3, 0);
+	else			wcolor_set(p->total, 1, 0);
+
 	d = p->score;
 	for ( i=3 ; i && d ; i-- ) {
 		put_matrix(p->total, matrix[d%10], 1, 8 + ((i-1)*MTX_COLS));
 		d /= 10;
 	}
 
-	if ( game.gametype < 2 && p->score <= 170 )
+	if ( game.gametype < 2 && p->score <= 170 ) {
+		wcolor_set(p->total, 2, 0);
 		mvwprintw(p->total, 1+MTX_LINES+3,1, "Best Finish: %s", bestfinish[p->score]);
+	}
 }
 
 void	gameboard_addtolist(struct _player *p, int value)
@@ -311,7 +316,7 @@ struct _player *       init_players(struct _game *game)
 		scrollok(players[p].list, TRUE);
 
 		/* Colors set */
-		wcolor_set(players[p].total, 1, 0); wattron(players[p].total, A_BOLD);
+		wattron(players[p].total, A_BOLD);
 
 		printdebug("[%p] [%p] [%p] [%p] [%p]"
 			, players[p].main,  players[p].stat, players[p].list, players[p].total, players[p].input);
@@ -360,7 +365,7 @@ int	main(void)
 		start_color();
 		init_pair(1, COLOR_CYAN,  COLOR_BLACK); /* Total		*/
 		init_pair(2, COLOR_WHITE, COLOR_BLACK); /* Player's name	*/
-
+		init_pair(3, COLOR_RED,   COLOR_BLACK); /* Player is on finish	*/
 	}
 
 	main_get_infos(&game);
