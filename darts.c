@@ -47,7 +47,8 @@ void	gameboard_update(struct _player *, int);			/* Update content of specifid pl
 void	gameboard_reset(struct _player *);
 
 void	main_clear(struct _game *);					/* Clear the main screen				*/
-#define main_show(a)    touchwin((a)->main), wrefresh((a)->main)
+void	main_show(struct _game *);
+void	main_redraw(struct _game *);
 void	main_get_infos(struct _game *);					/* get game informations				*/
 
 void	popup(char *);							/* Popup a centralized box with message and wait for a  */
@@ -155,6 +156,7 @@ void	show_help(void)
 	"\n"
 	"N -> Next player's turn\n"
 	"B -> Rollback the previous action\n"
+	"R -> Redraw screen\n"
 	"Q -> Quit\n"
 	"\n"
 	"H -> Show this help screen");
@@ -185,9 +187,21 @@ void    main_get_infos(struct _game *game)
 
 void	main_clear(struct _game *g)
 {
+	attr_t	sattr;
+	short	spair;
 	wclear(g->main);
 	wmove(g->main, MAX_ROWS, 0);
+	wattr_get(g->main, &sattr, &spair, NULL);
+	wattr_set(g->main, A_BOLD, 4, NULL);
 	waddstr(g->main, P_NAME" v"P_VERSION", (C) 2002 by David De Grave. All rights reserved.");
+	wattr_set(g->main, sattr, spair, NULL);
+}
+
+void	main_show(struct _game *g)
+{
+	touchwin(g->main);
+	wrefresh(g->main);
+	fdebug("main_show() called");
 }
 
 void    gameboard_focus(struct _player *prev, struct _player *next)
@@ -211,9 +225,25 @@ void	put_matrix(WINDOW *win, const char mtx[MTX_LINES][MTX_COLS+1], int y, int x
 void	gameboard_drawstatus(struct _player *p)
 {
 	wclear(p->stat);
+
 	mvwprintw(p->stat, 0, 1, "Name: %-30s", p->name);
 	mvwprintw(p->stat, 1, 1, " Won: %-2d  Lost: %-2d  Best point: %-3d  Best finish: %-3d"
 				, p->won, p->lost, p->bestPoint, p->bestFinish);
+
+	mvwchgat(p->stat, 0,  7, 30, A_BOLD, 2, NULL);
+
+	mvwchgat(p->stat, 1,  7,  3, A_BOLD, 1, NULL);
+	mvwchgat(p->stat, 1, 17,  3, A_BOLD, 1, NULL);   
+	mvwchgat(p->stat, 1, 33,  3, A_BOLD, 1, NULL); 
+	mvwchgat(p->stat, 1, 51,  5, A_BOLD, 1, NULL);  
+
+}
+
+bool	is_finishable(int score)
+{
+	if ( score == 50 ) return true;
+	if ( score <= 40 && (score % 2) == 0 ) return true;
+	return false;
 }
 
 void	gameboard_drawtotal(struct _player *p)
@@ -222,8 +252,8 @@ void	gameboard_drawtotal(struct _player *p)
 
 	wclear(p->total);
 
-	if ( p->score <= 170 )	wcolor_set(p->total, 3, 0);
-	else			wcolor_set(p->total, 1, 0);
+	if ( is_finishable(p->score) )	wcolor_set(p->total, 3, 0);
+	else				wcolor_set(p->total, 1, 0);
 
 	d = p->score;
 	for ( i=3 ; i && d ; i-- ) {
@@ -324,6 +354,7 @@ struct _player *       init_players(struct _game *game)
 		gameboard_draw(&players[p]);
 		gameboard_show(&players[p]);
 
+		wattr_on(players[p].stat, COLOR_PAIR(2) | A_BOLD, NULL);
 		mvwgetnstr(players[p].stat, 0, 7, players[p].name, sizeof(players[0].name));
 	}
 
@@ -366,6 +397,7 @@ int	main(void)
 		init_pair(1, COLOR_CYAN,  COLOR_BLACK); /* Total		*/
 		init_pair(2, COLOR_WHITE, COLOR_BLACK); /* Player's name	*/
 		init_pair(3, COLOR_RED,   COLOR_BLACK); /* Player is on finish	*/
+		init_pair(4, COLOR_BLACK, COLOR_BLACK); /* Gray color           */
 	}
 
 	main_get_infos(&game);
@@ -391,6 +423,8 @@ int	main(void)
 				case 'B': gameboard_rollback(&players[last_player]);	/* (B) Rollback the previous action	*/
 					  gameboard_show(&players[last_player]);
 					  actual_player = last_player;
+					  break;
+				case 'R': main_show(&game);
 					  break;
 				case 'H': show_help();
 					  main_show(&game);
