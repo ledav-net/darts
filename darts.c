@@ -226,6 +226,8 @@ void	gameboard_drawstatus(struct _player *p)
 {
 	wclear(p->stat);
 
+	wattr_off(p->stat, A_BOLD, 0);
+
 	mvwprintw(p->stat, 0, 1, "Name: %-30s", p->name);
 	mvwprintw(p->stat, 1, 1, " Won: %-2d  Lost: %-2d  Best point: %-3d  Best finish: %-3d"
 				, p->won, p->lost, p->bestPoint, p->bestFinish);
@@ -236,7 +238,6 @@ void	gameboard_drawstatus(struct _player *p)
 	mvwchgat(p->stat, 1, 17,  3, A_BOLD, 1, NULL);   
 	mvwchgat(p->stat, 1, 33,  3, A_BOLD, 1, NULL); 
 	mvwchgat(p->stat, 1, 51,  5, A_BOLD, 1, NULL);  
-
 }
 
 bool	is_finishable(int score)
@@ -252,17 +253,19 @@ void	gameboard_drawtotal(struct _player *p)
 
 	wclear(p->total);
 
-	if ( is_finishable(p->score) )	wcolor_set(p->total, 3, 0);
-	else				wcolor_set(p->total, 1, 0);
+	if ( p->score <= 170 ) {
+		if ( is_finishable(p->score) )	wattr_set(p->total, A_BOLD, 3, 0);
+		else				wattr_set(p->total, A_BOLD, 5, 0);
+	}
+	else	wattr_set(p->total, A_BOLD, 1, 0);
 
 	d = p->score;
 	for ( i=3 ; i && d ; i-- ) {
 		put_matrix(p->total, matrix[d%10], 1, 8 + ((i-1)*MTX_COLS));
 		d /= 10;
 	}
-
 	if ( game.gametype < 2 && p->score <= 170 ) {
-		wcolor_set(p->total, 2, 0);
+		wattr_set(p->total, A_BOLD, 2, 0);
 		mvwprintw(p->total, 1+MTX_LINES+3,1, "Best Finish: %s", bestfinish[p->score]);
 	}
 }
@@ -354,7 +357,7 @@ struct _player *       init_players(struct _game *game)
 		gameboard_draw(&players[p]);
 		gameboard_show(&players[p]);
 
-		wattr_on(players[p].stat, COLOR_PAIR(2) | A_BOLD, NULL);
+		wattr_set(players[p].stat, A_BOLD, 2, 0);
 		mvwgetnstr(players[p].stat, 0, 7, players[p].name, sizeof(players[0].name));
 	}
 
@@ -394,10 +397,11 @@ int	main(void)
 	if ( has_colors() ) {
 		printdebug("Colors enabled !","");
 		start_color();
-		init_pair(1, COLOR_CYAN,  COLOR_BLACK); /* Total		*/
-		init_pair(2, COLOR_WHITE, COLOR_BLACK); /* Player's name	*/
-		init_pair(3, COLOR_RED,   COLOR_BLACK); /* Player is on finish	*/
-		init_pair(4, COLOR_BLACK, COLOR_BLACK); /* Gray color           */
+		init_pair(1, COLOR_CYAN,   COLOR_BLACK); /* Total		*/
+		init_pair(2, COLOR_WHITE,  COLOR_BLACK); /* Player's name	*/
+		init_pair(3, COLOR_RED,    COLOR_BLACK); /* Player is on finish	*/
+		init_pair(4, COLOR_BLACK,  COLOR_BLACK); /* Gray color           */
+		init_pair(5, COLOR_YELLOW, COLOR_BLACK);
 	}
 
 	main_get_infos(&game);
