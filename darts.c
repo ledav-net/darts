@@ -5,6 +5,7 @@
 #include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 #define	P_NAME		"Darts"
 #define P_VERSION	"1.1.0"
