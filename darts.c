@@ -22,7 +22,7 @@
 #include "common.h"
 
 #define	P_NAME		"Darts"
-#define P_VERSION	"1.1.0"
+#define P_VERSION	"1.2.0"
 
 #define	MAX_COLS	128
 #define MAX_ROWS	48
