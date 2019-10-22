@@ -1,7 +1,7 @@
 
 
 
-OBJS:=		darts.o
+OBJS:=		darts.o common.o
 BUILD:=		darts
 INSTALLDIR:=	/usr/local/bin
 
@@ -12,10 +12,10 @@ install:	$(BUILD)
 		@cp -v $(BUILD) $(INSTALLDIR)/$(BUILD)
 
 debug:		$(BUILD).c
-		gcc -ggdb $< -o $(BUILD) -lallproc -lncurses -D_DEBUG
+		gcc -ggdb $< -o $(BUILD) -lncurses -D_DEBUG
 
 $(BUILD):	$(OBJS)
-		gcc $(OBJS) -o $(BUILD) -lncurses -lallproc
+		gcc $(OBJS) -o $(BUILD) -lncurses
 
 clean:
 		rm -f *~ $(OBJS)

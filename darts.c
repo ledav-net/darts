@@ -1,11 +1,25 @@
-
-#include <allproc.h>
-
+/*
+ * Copyright (C) 2002 David De Grave <david@ledav.net>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <ncurses.h>
 #include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+
+#include "common.h"
 
 #define	P_NAME		"Darts"
 #define P_VERSION	"1.1.0"
@@ -194,7 +208,7 @@ void	main_clear(struct _game *g)
 	wmove(g->main, MAX_ROWS, 0);
 	wattr_get(g->main, &sattr, &spair, NULL);
 	wattr_set(g->main, A_BOLD, 4, NULL);
-	waddstr(g->main, P_NAME" v"P_VERSION", (C) 2002 by David De Grave. All rights reserved.");
+	waddstr(g->main, P_NAME" v"P_VERSION", (C) 2002 by David De Grave. Released under the GPLv3 License.");
 	wattr_set(g->main, sattr, spair, NULL);
 }
 
