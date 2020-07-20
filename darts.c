@@ -28,6 +28,8 @@
 #define MAX_ROWS	48
 
 #include "matrix_def.h"
+//#include "matrix_figlet-big_def.h"
+
 #include "finish_def.h"
 
 struct	_player		{	char		name[16];		/* Player's name					*/
