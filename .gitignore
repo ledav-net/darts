@@ -1,3 +1,5 @@
+*.[iso]
+*.log
 *~
-*.o
+/tags
 darts
